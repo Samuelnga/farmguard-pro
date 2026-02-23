@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan Crop — FarmGuard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+  <!-- Loading overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">🔬 Analyzing your crop leaf...</div>
+    <div class="loading-sub">AI is examining disease patterns</div>
+  </div>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">🌿</div>
+        <span>Farm<strong>Guard</strong></span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/pages/dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/pages/scanner.html" class="active"><span class="nav-icon">🔬</span> Scan Crop</a>
+        <a href="/pages/history.html"><span class="nav-icon">📋</span> Scan History</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div class="user-avatar" id="userAvatar">F</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Loading...</div>
+            <div class="user-role">Farmer</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+          <h1>🔬 Scan Crop</h1>
+        </div>
+        <a href="/pages/history.html" style="font-size:0.85rem;color:var(--g3);font-weight:600;">View History →</a>
+      </div>
+
+      <div class="page-body">
+        <div class="scanner-wrap">
+          <p style="color:var(--text-muted);font-size:0.9rem;margin-bottom:24px;line-height:1.7;">
+            📌 <strong>Tip:</strong> For best results, take a clear close-up photo of the affected leaf in good lighting. Avoid blurry or dark images.
+          </p>
+
+          <div class="upload-card">
+            <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+
+            <!-- Drop Zone -->
+            <div class="drop-zone" id="dropZone">
+              <div class="drop-icon">📸</div>
+              <h3>Upload or Take Leaf Photo</h3>
+              <p>Drag & drop an image here, or click the button below.<br>Works with camera and gallery photos.</p>
+              <button class="btn-choose" onclick="document.getElementById('fileInput').click()">
+                📁 Choose Photo
+              </button>
+            </div>
+
+            <!-- Preview -->
+            <div class="preview-box" id="previewBox">
+              <div class="preview-img-wrap">
+                <img id="previewImg" src="" alt="Leaf preview">
+                <div class="preview-label">📍 Image ready for analysis</div>
+              </div>
+              <div class="btn-row">
+                <button class="btn-analyze" id="analyzeBtn" onclick="analyzeImage()">
+                  <span id="analyzeBtnText">🔬 Analyze Disease</span>
+                </button>
+                <button class="btn-new" onclick="resetScanner()">🔄 New</button>
+              </div>
+            </div>
+
+            <!-- Results -->
+            <div class="result-panel" id="resultPanel">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-top:4px;">
+                <h3 style="font-family:'Fraunces',serif;font-size:1.1rem;">📋 Analysis Result</h3>
+                <button onclick="resetScanner()" style="font-size:0.8rem;color:var(--g3);background:none;border:none;cursor:pointer;font-weight:600;">Scan Another →</button>
+              </div>
+              <div class="result-box" id="resultBox"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = JSON.parse(localStorage.getItem('fg_user') || '{}');
+    document.getElementById('userName').textContent   = user.name || 'Farmer';
+    document.getElementById('userAvatar').textContent = (user.name || 'F')[0].toUpperCase();
+
+    let imageBase64 = null;
+    let imageFile   = null;
+
+    // File input
+    document.getElementById('fileInput').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) loadImage(file);
+    });
+
+    // Drag & drop
+    const dz = document.getElementById('dropZone');
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (f && f.type.startsWith('image/')) loadImage(f);
+    });
+    dz.addEventListener('click', () => document.getElementById('fileInput').click());
+
+    function loadImage(file) {
+      imageFile = file;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imageBase64 = e.target.result.split(',')[1];
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('dropZone').style.display   = 'none';
+        document.getElementById('previewBox').classList.add('show');
+        document.getElementById('resultPanel').classList.remove('show');
+        document.getElementById('analyzeBtnText').textContent = '🔬 Analyze Disease';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function analyzeImage() {
+      if (!imageBase64) return;
+      const btn     = document.getElementById('analyzeBtn');
+      const overlay = document.getElementById('loadingOverlay');
+
+      btn.disabled = true;
+      document.getElementById('analyzeBtnText').innerHTML = '<div class="spinner"></div> Analyzing...';
+      overlay.classList.add('show');
+
+      try {
+        const data = await API.post('/api/analyze', {
+          imageBase64, mediaType: imageFile.type || 'image/jpeg'
+        });
+        renderResult(data.result);
+        document.getElementById('resultPanel').classList.add('show');
+        document.getElementById('resultPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (err) {
+        renderError(err.message);
+        document.getElementById('resultPanel').classList.add('show');
+      } finally {
+        btn.disabled = false;
+        document.getElementById('analyzeBtnText').textContent = '🔬 Analyze Again';
+        overlay.classList.remove('show');
+      }
+    }
+
+    function renderResult(r) {
+      const sevMap = {
+        Healthy:  { cls:'healthy', label:'✅ Healthy',        icon:'🌿', iconCls:'healthy' },
+        Low:      { cls:'low',     label:'🟡 Low Severity',   icon:'⚠️',  iconCls:'warning' },
+        Medium:   { cls:'medium',  label:'🟠 Medium',         icon:'🔴', iconCls:'disease' },
+        High:     { cls:'high',    label:'🔴 High Severity',  icon:'🚨', iconCls:'disease' },
+        Critical: { cls:'high',    label:'🚨 Critical',       icon:'💀', iconCls:'disease' }
+      };
+      const sev  = sevMap[r.severity] || sevMap.Medium;
+      const conf = r.confidence || 80;
+
+      const treatmentHTML = (r.treatment_steps||[]).map((s,i) => `
+        <li><div class="t-num">${i+1}</div><span>${s}</span></li>`).join('');
+
+      const productsHTML = (r.local_products||[]).map(p =>
+        `<span class="product-chip">🛍️ ${p}</span>`).join('');
+
+      document.getElementById('resultBox').innerHTML = `
+        <div class="result-top">
+          <div class="result-status-icon ${sev.iconCls}">${sev.icon}</div>
+          <div style="flex:1;">
+            <div class="result-title">${r.disease_name || 'Analysis Complete'}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px;">
+              <span class="badge ${sev.cls}">${sev.label}</span>
+              ${r.crop_type ? `<span style="font-size:0.78rem;color:var(--text-muted);">🌱 ${r.crop_type}</span>` : ''}
+            </div>
+            <div class="conf-bar-wrap">
+              <div class="conf-label"><span>AI Confidence</span><span>${conf}%</span></div>
+              <div class="conf-bar"><div class="conf-fill" style="width:0%"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="result-body">
+          ${r.description ? `<div><div class="result-section-title">Diagnosis</div><p class="result-text">${r.description}</p></div>` : ''}
+          ${r.symptoms_observed ? `<div><div class="result-section-title">Symptoms Observed</div><p class="result-text">${r.symptoms_observed}</p></div>` : ''}
+          ${r.cause ? `<div><div class="result-section-title">Cause</div><p class="result-text">${r.cause}</p></div>` : ''}
+          ${!r.is_healthy && treatmentHTML ? `<div><div class="result-section-title">Treatment Steps</div><ul class="treatment-list">${treatmentHTML}</ul></div>` : ''}
+          ${!r.is_healthy && productsHTML ? `<div><div class="result-section-title">Products Available in Nigeria</div><div class="product-chips">${productsHTML}</div></div>` : ''}
+          ${r.prevention_tips ? `<div><div class="result-section-title">Prevention</div><p class="result-text">${r.prevention_tips}</p></div>` : ''}
+          ${r.yield_impact && !r.is_healthy ? `<div class="info-box warning-orange">⚡ <span><strong>Yield Impact:</strong> ${r.yield_impact}</span></div>` : ''}
+          ${r.urgency_note && !r.is_healthy ? `<div class="info-box warning-red">🚨 <span><strong>Urgency:</strong> ${r.urgency_note}</span></div>` : ''}
+          <div class="info-box info">ℹ️ <span>AI-assisted diagnosis. Confirm with your local Agricultural Development Officer (ADO) before treatment.</span></div>
+        </div>`;
+
+      // Animate confidence bar
+      setTimeout(() => {
+        const fill = document.querySelector('.conf-fill');
+        if (fill) fill.style.width = conf + '%';
+      }, 200);
+    }
+
+    function renderError(msg) {
+      document.getElementById('resultBox').innerHTML = `
+        <div style="padding:32px;text-align:center;color:var(--danger);">
+          <div style="font-size:2rem;margin-bottom:10px;">❌</div>
+          <strong>Analysis Failed</strong>
+          <p style="font-size:0.85rem;margin-top:8px;color:var(--text-muted);">${msg || 'Please try again with a clearer image.'}</p>
+        </div>`;
+    }
+
+    function resetScanner() {
+      imageBase64 = null; imageFile = null;
+      document.getElementById('fileInput').value = '';
+      document.getElementById('previewImg').src = '';
+      document.getElementById('dropZone').style.display = '';
+      document.getElementById('previewBox').classList.remove('show');
+      document.getElementById('resultPanel').classList.remove('show');
+      document.getElementById('resultBox').innerHTML = '';
+    }
+
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+  </script>
+</body>
+</html>

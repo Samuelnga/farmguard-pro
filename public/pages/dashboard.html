@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — FarmGuard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">🌿</div>
+        <span>Farm<strong>Guard</strong></span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/pages/dashboard.html" class="active"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/pages/scanner.html"><span class="nav-icon">🔬</span> Scan Crop</a>
+        <a href="/pages/history.html"><span class="nav-icon">📋</span> Scan History</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div class="user-avatar" id="userAvatar">F</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Loading...</div>
+            <div class="user-role">Farmer</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <div class="main-content">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+          <h1>Dashboard</h1>
+        </div>
+        <a href="/pages/scanner.html" style="background:var(--g4);color:white;padding:10px 20px;border-radius:50px;font-size:0.85rem;font-weight:700;box-shadow:0 4px 14px rgba(76,175,80,0.3);">
+          + New Scan
+        </a>
+      </div>
+
+      <div class="page-body">
+        <!-- Welcome -->
+        <div style="margin-bottom:28px;">
+          <h2 style="font-family:'Fraunces',serif;font-size:1.5rem;margin-bottom:4px;">Good day, <span id="welcomeName">Farmer</span> 👋</h2>
+          <p style="color:var(--text-muted);font-size:0.88rem;">Here is a summary of your farm health activity.</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-card">
+            <div class="stat-icon-wrap green">🔬</div>
+            <div>
+              <div class="stat-value" id="totalScans">—</div>
+              <div class="stat-card-label">Total Scans</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap red">🦠</div>
+            <div>
+              <div class="stat-value" id="diseasedScans">—</div>
+              <div class="stat-card-label">Diseases Detected</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap green">✅</div>
+            <div>
+              <div class="stat-value" id="healthyScans">—</div>
+              <div class="stat-card-label">Healthy Scans</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon-wrap blue">📅</div>
+            <div>
+              <div class="stat-value" id="lastScan">—</div>
+              <div class="stat-card-label">Last Scan</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Two column -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px;" id="twoCol">
+          <!-- Top Diseases -->
+          <div style="background:white;border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);">
+            <h3 style="font-family:'Fraunces',serif;font-size:1rem;margin-bottom:16px;">⚠️ Most Common Diseases</h3>
+            <div id="diseaseList">
+              <div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:20px;">No data yet</div>
+            </div>
+          </div>
+          <!-- Crop Breakdown -->
+          <div style="background:white;border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);">
+            <h3 style="font-family:'Fraunces',serif;font-size:1rem;margin-bottom:16px;">🌱 Crops Scanned</h3>
+            <div id="cropList">
+              <div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:20px;">No data yet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Scans -->
+        <div style="background:white;border-radius:16px;padding:24px;box-shadow:var(--card-shadow);border:1px solid var(--border);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+            <h3 style="font-family:'Fraunces',serif;font-size:1rem;">🕐 Recent Scans</h3>
+            <a href="/pages/history.html" style="font-size:0.82rem;color:var(--g3);font-weight:600;">View All →</a>
+          </div>
+          <div id="recentScans">
+            <div style="color:var(--text-muted);font-size:0.85rem;text-align:center;padding:30px;">Loading...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/utils.js"></script>
+  <script>
+    requireAuth();
+
+    const user = JSON.parse(localStorage.getItem('fg_user') || '{}');
+    document.getElementById('welcomeName').textContent  = user.name?.split(' ')[0] || 'Farmer';
+    document.getElementById('userName').textContent     = user.name || 'Farmer';
+    document.getElementById('userAvatar').textContent   = (user.name || 'F')[0].toUpperCase();
+
+    async function loadDashboard() {
+      try {
+        const data = await API.get('/api/dashboard');
+        const s    = data.stats;
+
+        document.getElementById('totalScans').textContent   = s.totalScans;
+        document.getElementById('diseasedScans').textContent = s.diseasedScans;
+        document.getElementById('healthyScans').textContent  = s.healthyScans;
+        document.getElementById('lastScan').textContent      = s.recentScans[0]
+          ? timeAgo(s.recentScans[0].created_at) : 'Never';
+
+        // Top diseases
+        const dl = document.getElementById('diseaseList');
+        if (s.topDiseases.length) {
+          dl.innerHTML = s.topDiseases.map(d => `
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="font-size:0.85rem;font-weight:500;">${d.disease_name}</span>
+              <span style="font-size:0.75rem;background:rgba(192,57,43,0.1);color:var(--danger);padding:2px 8px;border-radius:20px;font-weight:700;">${d.count}x</span>
+            </div>
+          `).join('');
+        }
+
+        // Crop breakdown
+        const cl = document.getElementById('cropList');
+        const cropEmoji = { Maize:'🌽', Tomato:'🍅', Rice:'🌾', Cassava:'🥬', Cowpea:'🫘', Yam:'🌿', Unknown:'❓' };
+        if (s.cropBreakdown.length) {
+          cl.innerHTML = s.cropBreakdown.map(c => `
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span>${cropEmoji[c.crop_type] || '🌱'}</span>
+              <span style="flex:1;font-size:0.85rem;font-weight:500;">${c.crop_type}</span>
+              <span style="font-size:0.75rem;background:rgba(76,175,80,0.1);color:var(--g3);padding:2px 8px;border-radius:20px;font-weight:700;">${c.count} scan${c.count>1?'s':''}</span>
+            </div>
+          `).join('');
+        }
+
+        // Recent scans
+        const rs = document.getElementById('recentScans');
+        if (s.recentScans.length) {
+          rs.innerHTML = s.recentScans.map(scan => buildScanCard(scan)).join('');
+        } else {
+          rs.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-icon">🔬</div>
+              <h3>No scans yet</h3>
+              <p>Take your first scan to see results here</p>
+              <a href="/pages/scanner.html" style="background:var(--g4);color:white;padding:10px 22px;border-radius:50px;font-size:0.85rem;font-weight:700;display:inline-block;">Start Scanning</a>
+            </div>`;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadDashboard();
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+
+    // Responsive two column
+    if (window.innerWidth < 700) {
+      document.getElementById('twoCol').style.gridTemplateColumns = '1fr';
+    }
+  </script>
+</body>
+</html>

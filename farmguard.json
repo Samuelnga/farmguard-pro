@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "id": "a4821751-3b90-4861-ae9b-612316e97174",
+      "name": "Ngakilahyel Bdliya Samuel",
+      "email": "samuelnga123@gmail.com",
+      "phone": "09094637497",
+      "state": "FCT - Abuja",
+      "password": "$2a$10$W04RhWSEsrBUzMaFwMiTg.RX55BlaACzJ2YN58Gj/Dr4b5UQ6iNk6",
+      "role": "farmer",
+      "created_at": "2026-02-23T20:21:41.079Z",
+      "last_login": "2026-02-23T20:40:48.588Z"
+    },
+    {
+      "id": "2fe0ae8c-c243-4555-bab1-3a4fe7156312",
+      "name": "ALI BELLO",
+      "email": "alibello@gmail.com",
+      "phone": "09094637497",
+      "state": "Gombe",
+      "password": "$2a$10$dSmVyqX1giVlobC46aCqs.Z93Jv1Iv7QMI8B3tduFOvpg2QmpcAnm",
+      "role": "farmer",
+      "created_at": "2026-02-23T20:40:24.528Z",
+      "last_login": "2026-02-23T20:42:18.791Z"
+    }
+  ],
+  "scans": [],
+  "disease_stats": []
+}

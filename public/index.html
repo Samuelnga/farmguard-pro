@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FarmGuard — AI Crop Disease Detection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,400;0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-logo">
+        <div class="logo-mark">🌿</div>
+        <span>Farm<strong>Guard</strong></span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How It Works</a>
+        <a href="#crops">Crops</a>
+        <div id="navAuth">
+          <a href="/pages/login.html" class="btn-nav-outline">Login</a>
+          <a href="/pages/register.html" class="btn-nav-fill">Get Started Free</a>
+        </div>
+        <div id="navUser" style="display:none">
+          <a href="/pages/dashboard.html" class="btn-nav-outline">Dashboard</a>
+          <button onclick="logout()" class="btn-nav-fill">Logout</button>
+        </div>
+      </div>
+      <button class="hamburger" id="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero-section">
+    <div class="hero-bg">
+      <div class="hero-orb orb-1"></div>
+      <div class="hero-orb orb-2"></div>
+      <div class="hero-orb orb-3"></div>
+      <div class="grain-overlay"></div>
+    </div>
+    <div class="hero-content">
+      <div class="hero-badge">🇳🇬 Built for Nigerian Farmers</div>
+      <h1 class="hero-title">
+        Protect Your Harvest<br>
+        <em>Before It's Too Late</em>
+      </h1>
+      <p class="hero-subtitle">
+        Take a photo of any crop leaf. Our AI identifies diseases instantly,
+        tells you the cause, and gives you a step-by-step treatment plan
+        with products available at your local agro store.
+      </p>
+      <div class="hero-actions">
+        <a href="/pages/register.html" class="btn-hero-primary">
+          Start Scanning Free →
+        </a>
+        <a href="#how-it-works" class="btn-hero-ghost">See How It Works</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat-item">
+          <span class="stat-num">6+</span>
+          <span class="stat-label">Crops Supported</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">95%</span>
+          <span class="stat-label">AI Accuracy</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-num">&lt;5s</span>
+          <span class="stat-label">Diagnosis Time</span>
+        </div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="phone-mockup">
+        <div class="phone-screen">
+          <div class="mock-scan-ui">
+            <div class="mock-header">
+              <span class="mock-dot red"></span>
+              <span class="mock-dot yellow"></span>
+              <span class="mock-dot green"></span>
+            </div>
+            <div class="mock-leaf-area">
+              <div class="scan-ring"></div>
+              <div class="mock-leaf-icon">🍃</div>
+              <div class="scan-line"></div>
+            </div>
+            <div class="mock-result">
+              <div class="mock-badge disease">Northern Leaf Blight</div>
+              <div class="mock-crop">🌽 Maize · High Severity</div>
+              <div class="mock-bar-wrap">
+                <div class="mock-bar"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CROPS SECTION ========== -->
+  <section class="crops-section" id="crops">
+    <div class="container">
+      <div class="section-label">Supported Crops</div>
+      <h2 class="section-title">Covers All Major Nigerian Staple Crops</h2>
+      <div class="crops-grid">
+        <div class="crop-card">
+          <div class="crop-icon">🌽</div>
+          <h3>Maize</h3>
+          <p>Northern Leaf Blight, Gray Leaf Spot, Common Rust, Fall Armyworm</p>
+        </div>
+        <div class="crop-card">
+          <div class="crop-icon">🍅</div>
+          <h3>Tomato</h3>
+          <p>Early Blight, Late Blight, Bacterial Wilt, Leaf Curl Virus</p>
+        </div>
+        <div class="crop-card">
+          <div class="crop-icon">🌾</div>
+          <h3>Rice</h3>
+          <p>Blast Disease, Brown Spot, Sheath Blight, Bacterial Leaf Blight</p>
+        </div>
+        <div class="crop-card">
+          <div class="crop-icon">🥬</div>
+          <h3>Cassava</h3>
+          <p>Mosaic Virus, Brown Streak, Anthracnose, Bacterial Blight</p>
+        </div>
+        <div class="crop-card">
+          <div class="crop-icon">🫘</div>
+          <h3>Cowpea</h3>
+          <p>Septoria Leaf Spot, Cercospora Blight, Aphid Damage</p>
+        </div>
+        <div class="crop-card">
+          <div class="crop-icon">🌿</div>
+          <h3>Yam</h3>
+          <p>Anthracnose, Dry Rot, Yam Mosaic Virus, Scab</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== HOW IT WORKS ========== -->
+  <section class="how-section" id="how-it-works">
+    <div class="container">
+      <div class="section-label">Process</div>
+      <h2 class="section-title">From Photo to Treatment in 4 Steps</h2>
+      <div class="steps-timeline">
+        <div class="step-item">
+          <div class="step-icon-wrap">
+            <div class="step-num-big">01</div>
+            <div class="step-icon">📸</div>
+          </div>
+          <div class="step-content">
+            <h3>Take a Photo</h3>
+            <p>Point your phone camera at the affected leaf. Make sure it is well-lit and in focus. You can also upload a photo from your gallery.</p>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-icon-wrap">
+            <div class="step-num-big">02</div>
+            <div class="step-icon">🧠</div>
+          </div>
+          <div class="step-content">
+            <h3>AI Analysis</h3>
+            <p>Our deep learning model examines visual patterns, lesions, discoloration, and texture in under 5 seconds.</p>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-icon-wrap">
+            <div class="step-num-big">03</div>
+            <div class="step-icon">🦠</div>
+          </div>
+          <div class="step-content">
+            <h3>Disease Identified</h3>
+            <p>Get the exact disease name, severity level, cause (fungus, bacteria, virus, pest) and how it spreads.</p>
+          </div>
+        </div>
+        <div class="step-connector"></div>
+        <div class="step-item">
+          <div class="step-icon-wrap">
+            <div class="step-num-big">04</div>
+            <div class="step-icon">💊</div>
+          </div>
+          <div class="step-content">
+            <h3>Treatment Plan</h3>
+            <p>Step-by-step treatment instructions with specific agrochemical products you can buy at Nigerian agro stores.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FEATURES ========== -->
+  <section class="features-section" id="features">
+    <div class="container">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything a Farmer Needs</h2>
+      <div class="features-grid">
+        <div class="feature-card big">
+          <div class="feat-icon">⚡</div>
+          <h3>Real-Time Detection</h3>
+          <p>Results in under 5 seconds. No waiting. No sending photos to extension officers and waiting days for a response.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">📊</div>
+          <h3>Scan History</h3>
+          <p>Every diagnosis is saved. Track disease trends across your farm over time.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">🛍️</div>
+          <h3>Local Products</h3>
+          <p>Treatment recommendations use agrochemicals sold in Nigerian markets.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">📱</div>
+          <h3>Mobile First</h3>
+          <p>Works perfectly on any Android or iPhone. No app download needed.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feat-icon">🔒</div>
+          <h3>Secure Accounts</h3>
+          <p>Each farmer has their own private account with encrypted data storage.</p>
+        </div>
+        <div class="feature-card big">
+          <div class="feat-icon">📈</div>
+          <h3>Farm Dashboard</h3>
+          <p>See your scan history, most common diseases on your farm, healthy vs diseased crops breakdown and trends over time.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta-section">
+    <div class="cta-inner">
+      <h2>Start Protecting Your Farm Today</h2>
+      <p>Free to use. No credit card. Works on any phone.</p>
+      <a href="/pages/register.html" class="btn-cta">Create Free Account →</a>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-logo">
+        <span class="logo-icon">🌿</span>
+        <span>FarmGuard Pro</span>
+      </div>
+      <p class="footer-tagline">AI-powered crop disease detection for Nigerian farmers.</p>
+      <p class="footer-note">Always verify AI diagnoses with your local Agricultural Development Officer (ADO).</p>
+      <p class="footer-copy">© 2025 FarmGuard Pro · Final Year Project · All Rights Reserved</p>
+    </div>
+  </footer>
+
+  <script>
+    // Check if user is logged in
+    const token = localStorage.getItem('fg_token');
+    if (token) {
+      document.getElementById('navAuth').style.display = 'none';
+      document.getElementById('navUser').style.display = 'flex';
+    }
+
+    // Sticky navbar
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+    });
+
+    function toggleMenu() {
+      document.getElementById('navLinks').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('fg_token');
+      localStorage.removeItem('fg_user');
+      window.location.reload();
+    }
+  </script>
+</body>
+</html>

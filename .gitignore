@@ -1,0 +1,22 @@
+# ============================================
+# .gitignore — FarmGuard Pro
+# ============================================
+
+# Environment variables — NEVER upload to GitHub
+.env
+
+# SQLite database file (gets recreated on server)
+*.db
+*.db-shm
+*.db-wal
+
+# Node modules — reinstalled automatically
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

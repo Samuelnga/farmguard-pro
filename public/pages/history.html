@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scan History — FarmGuard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,400&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <!-- Detail Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal-box" id="modalBox">
+      <div class="modal-header">
+        <h3 id="modalTitle">Scan Detail</h3>
+        <button class="btn-close" onclick="closeModalDirect()">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-mark">🌿</div>
+        <span>Farm<strong>Guard</strong></span>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/pages/dashboard.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/pages/scanner.html"><span class="nav-icon">🔬</span> Scan Crop</a>
+        <a href="/pages/history.html" class="active"><span class="nav-icon">📋</span> Scan History</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-user">
+          <div class="user-avatar" id="userAvatar">F</div>
+          <div class="user-info">
+            <div class="user-name" id="userName">Loading...</div>
+            <div class="user-role">Farmer</div>
+          </div>
+        </div>
+        <button class="btn-logout" onclick="logout()">🚪 Logout</button>
+      </div>
+    </aside>
+
+    <div class="main-content">
+      <div class="top-bar">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+          <h1>📋 Scan History</h1>
+        </div>
+        <a href="/pages/scanner.html" style="background:var(--g4);color:white;padding:10px 20px;border-radius:50px;font-size:0.85rem;font-weight:700;">
+          + New Scan
+        </a>
+      </div>
+
+      <div class="page-body">
+        <!-- Filter bar -->
+        <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;">
+          <input id="searchInput" type="text" placeholder="🔍 Search disease or crop..." oninput="filterScans()"
+            style="padding:10px 16px;border:1.5px solid var(--border);border-radius:50px;font-size:0.85rem;outline:none;font-family:inherit;flex:1;min-width:200px;">
+          <select id="filterSeverity" onchange="filterScans()"
+            style="padding:10px 16px;border:1.5px solid var(--border);border-radius:50px;font-size:0.85rem;outline:none;font-family:inherit;background:white;">
+            <option value="">All Severity</option>
+            <option>Healthy</option><option>Low</option><option>Medium</option><option>High</option><option>Critical</option>
+          </select>
+        </div>
+
+        <div class="history-grid" id="historyGrid">
+          <div style="text-align:center;padding:40px;color:var(--text-muted);">Loading your scans...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/utils.js"></script>
+  <script>
+    requireAuth();
+    const user = JSON.parse(localStorage.getItem('fg_user') || '{}');
+    document.getElementById('userName').textContent   = user.name || 'Farmer';
+    document.getElementById('userAvatar').textContent = (user.name || 'F')[0].toUpperCase();
+
+    const cropEmoji = { Maize:'🌽', Tomato:'🍅', Rice:'🌾', Cassava:'🥬', Cowpea:'🫘', Yam:'🌿', Unknown:'❓' };
+    let allScans = [];
+
+    async function loadHistory() {
+      try {
+        const data = await API.get('/api/scans');
+        allScans = data.scans;
+        renderScans(allScans);
+      } catch (err) {
+        document.getElementById('historyGrid').innerHTML =
+          `<div style="text-align:center;color:var(--danger);padding:40px;">Failed to load scans.</div>`;
+      }
+    }
+
+    function renderScans(scans) {
+      const grid = document.getElementById('historyGrid');
+      if (!scans.length) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔬</div>
+            <h3>No scans found</h3>
+            <p>You haven't scanned any crops yet, or no results match your search.</p>
+            <a href="/pages/scanner.html" style="background:var(--g4);color:white;padding:10px 22px;border-radius:50px;font-size:0.85rem;font-weight:700;display:inline-block;">Start Scanning</a>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = scans.map(scan => {
+        const sevCls = (scan.severity || 'medium').toLowerCase();
+        const emoji  = cropEmoji[scan.crop_type] || '🌱';
+        const date   = new Date(scan.created_at).toLocaleDateString('en-NG', { day:'numeric', month:'short', year:'numeric' });
+        return `
+          <div class="scan-card" onclick="openDetail('${scan.id}')">
+            <div class="scan-crop-icon">${emoji}</div>
+            <div class="scan-info">
+              <div class="scan-disease">${scan.disease_name}</div>
+              <div class="scan-meta">${scan.crop_type} · ${date} · Confidence: ${scan.confidence}%</div>
+            </div>
+            <div class="scan-severity">
+              <span class="badge ${sevCls}">${scan.severity}</span>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function filterScans() {
+      const q   = document.getElementById('searchInput').value.toLowerCase();
+      const sev = document.getElementById('filterSeverity').value;
+      const filtered = allScans.filter(s => {
+        const matchQ   = !q || s.disease_name.toLowerCase().includes(q) || (s.crop_type||'').toLowerCase().includes(q);
+        const matchSev = !sev || s.severity === sev;
+        return matchQ && matchSev;
+      });
+      renderScans(filtered);
+    }
+
+    async function openDetail(id) {
+      try {
+        const data = await API.get(`/api/scans/${id}`);
+        const r    = data.scan;
+        const treatmentHTML = (r.treatment_steps||[]).map((s,i) =>
+          `<li><div class="t-num">${i+1}</div><span>${s}</span></li>`).join('');
+        const productsHTML = (r.local_products||[]).map(p =>
+          `<span class="product-chip">🛍️ ${p}</span>`).join('');
+
+        document.getElementById('modalTitle').textContent = r.disease_name;
+        document.getElementById('modalBody').innerHTML = `
+          <div style="margin-bottom:16px;">
+            <span class="badge ${(r.severity||'medium').toLowerCase()}">${r.severity}</span>
+            <span style="font-size:0.8rem;color:var(--text-muted);margin-left:10px;">🌱 ${r.crop_type} · ${new Date(r.created_at).toLocaleString('en-NG')}</span>
+          </div>
+          ${r.description ? `<div style="margin-bottom:16px;"><div class="result-section-title">Diagnosis</div><p class="result-text">${r.description}</p></div>` : ''}
+          ${r.symptoms ? `<div style="margin-bottom:16px;"><div class="result-section-title">Symptoms</div><p class="result-text">${r.symptoms}</p></div>` : ''}
+          ${r.cause ? `<div style="margin-bottom:16px;"><div class="result-section-title">Cause</div><p class="result-text">${r.cause}</p></div>` : ''}
+          ${treatmentHTML ? `<div style="margin-bottom:16px;"><div class="result-section-title">Treatment Steps</div><ul class="treatment-list">${treatmentHTML}</ul></div>` : ''}
+          ${productsHTML ? `<div style="margin-bottom:16px;"><div class="result-section-title">Recommended Products</div><div class="product-chips">${productsHTML}</div></div>` : ''}
+          ${r.prevention_tips ? `<div style="margin-bottom:16px;"><div class="result-section-title">Prevention</div><p class="result-text">${r.prevention_tips}</p></div>` : ''}
+          ${r.yield_impact && !r.is_healthy ? `<div class="info-box warning-orange" style="margin-bottom:10px;">⚡ <span><strong>Yield Impact:</strong> ${r.yield_impact}</span></div>` : ''}
+          ${r.urgency_note && !r.is_healthy ? `<div class="info-box warning-red">🚨 <span><strong>Urgency:</strong> ${r.urgency_note}</span></div>` : ''}
+        `;
+        document.getElementById('modalOverlay').classList.add('show');
+      } catch (err) {
+        alert('Could not load scan details.');
+      }
+    }
+
+    function closeModal(e) {
+      if (e.target === document.getElementById('modalOverlay')) closeModalDirect();
+    }
+    function closeModalDirect() {
+      document.getElementById('modalOverlay').classList.remove('show');
+    }
+
+    loadHistory();
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+    function logout() { localStorage.clear(); window.location.href = '/'; }
+  </script>
+</body>
+</html>
